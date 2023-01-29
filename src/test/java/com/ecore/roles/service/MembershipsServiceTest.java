@@ -11,14 +11,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
 import static com.ecore.roles.utils.TestData.DEFAULT_MEMBERSHIP;
+import static com.ecore.roles.utils.TestData.UUID_1;
+import static com.ecore.roles.utils.TestData.UUID_2;
 import static com.ecore.roles.utils.TestData.DEVELOPER_ROLE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -98,6 +100,38 @@ class MembershipsServiceTest {
     public void shouldFailToGetMembershipsWhenRoleIdIsNull() {
         assertThrows(NullPointerException.class,
                 () -> membershipsService.getMemberships(null));
+    }
+
+    @Test
+    public void shouldFindRolesWithValidUserIdAndTeamId() {
+        Membership expectedMembership = DEFAULT_MEMBERSHIP();
+        Optional<Membership> membership = Optional.of((Membership) expectedMembership);
+        when(membershipRepository.findByUserIdAndTeamId(expectedMembership.getUserId(),
+                expectedMembership.getTeamId()))
+                        .thenReturn(membership);
+
+        var roles = membershipsService.findRolesByUserIdAndTeamId(DEFAULT_MEMBERSHIP().getUserId(),
+                DEFAULT_MEMBERSHIP().getTeamId());
+
+        assertNotNull(roles);
+        assertTrue(roles.size() > 0);
+        assertEquals(roles.get(0).getName(), DEFAULT_MEMBERSHIP().getRole().getName());
+    }
+
+    @Test
+    @MockitoSettings(strictness = Strictness.LENIENT)
+    public void shouldFailFindRolesWithInvalidUserIdAndTeamId() {
+        Membership expectedMembership = DEFAULT_MEMBERSHIP();
+        Optional<Membership> membership = Optional.of((Membership) expectedMembership);
+        when(membershipRepository.findByUserIdAndTeamId(expectedMembership.getUserId(),
+                expectedMembership.getTeamId()))
+                        .thenReturn(membership);
+
+        var roles = membershipsService.findRolesByUserIdAndTeamId(UUID_1,
+                UUID_2);
+
+        assertNotNull(roles);
+        assertTrue(roles.isEmpty());
     }
 
 }

@@ -1,5 +1,6 @@
 package com.ecore.roles.service.impl;
 
+import com.ecore.roles.client.model.Team;
 import com.ecore.roles.exception.InvalidArgumentException;
 import com.ecore.roles.exception.ResourceExistsException;
 import com.ecore.roles.exception.ResourceNotFoundException;
@@ -13,7 +14,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
@@ -51,5 +54,18 @@ public class MembershipsServiceImpl implements MembershipsService {
     @Override
     public List<Membership> getMemberships(@NonNull UUID rid) {
         return membershipRepository.findByRoleId(rid);
+    }
+
+    @Override
+    public List<Role> findRolesByUserIdAndTeamId(@NonNull UUID teamMemberId, @NonNull UUID teamId) {
+        Optional<Membership> memberships = membershipRepository.findByUserIdAndTeamId(teamMemberId, teamId);
+        if (!memberships.isPresent())
+            throw new ResourceNotFoundException(Team.class, teamId);
+        else {
+            List<Role> roles = new ArrayList<>();
+            memberships.stream().forEach((m) -> roles.add(m.getRole()));
+            return roles;
+        }
+
     }
 }
